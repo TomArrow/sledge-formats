@@ -44,16 +44,16 @@ namespace Sledge.Formats.Model.Goldsource
             }
         }
 
-        public static MdlFile FromFile(string path) 
+        public static MdlFile FromFile(string path, bool loadExtraTextureFiles = true) 
         {
             var dir = Path.GetDirectoryName(path);
             var fname = Path.GetFileName(path);
 
             var resolver = new DiskFileResolver(dir);
-            return FromFile(resolver, fname);
+            return FromFile(resolver, fname, loadExtraTextureFiles);
         }
 
-        public static MdlFile FromFile(IFileResolver resolver, string path)
+        public static MdlFile FromFile(IFileResolver resolver, string path, bool loadExtraTextureFiles = true)
         {
             var basedir = (Path.GetDirectoryName(path) ?? "").Replace('\\', '/');
             if (basedir.Length > 0 && !basedir.EndsWith("/")) basedir += "/";
@@ -66,13 +66,17 @@ namespace Sledge.Formats.Model.Goldsource
                 streams.Add(resolver.OpenFile(path));
                 
                 var tfile = basepath + "t" + ext;
-                if (resolver.FileExists(tfile)) streams.Add(resolver.OpenFile(tfile));
 
-                for (var i = 1; i < 32; i++)
+                if (loadExtraTextureFiles)
                 {
-                    var sfile = basepath + i.ToString("00") + ext;
-                    if (resolver.FileExists(sfile)) streams.Add(resolver.OpenFile(sfile));
-                    else break;
+                    if (resolver.FileExists(tfile)) streams.Add(resolver.OpenFile(tfile));
+
+                    for (var i = 1; i < 32; i++)
+                    {
+                        var sfile = basepath + i.ToString("00") + ext;
+                        if (resolver.FileExists(sfile)) streams.Add(resolver.OpenFile(sfile));
+                        else break;
+                    }
                 }
 
                 return new MdlFile(streams);
